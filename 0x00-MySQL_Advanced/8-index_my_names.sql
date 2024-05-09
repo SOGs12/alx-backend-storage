@@ -1,0 +1,8 @@
+-- Active: 1695137323808@@127.0.0.1@3306@holberton
+
+-- SQL script that creates an index idx_name_first
+-- on the table names and the first letter of name.
+-- Requirements:
+-- Only the first letter of name must be indexed
+
+CREATE INDEX idx_name_first ON names(name(1))
