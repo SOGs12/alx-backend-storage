@@ -1,33 +1,48 @@
-# Add necessary imports here
+#!/usr/bin/env python3
+"""Log stats - new version"""
 
-# MongoDB connection setup
-try:
-    client = MongoClient('mongodb://localhost:27017/')
-    db = client['your_database_name']
-    collection = db['your_collection_name']
-except Exception as e:
-    print(f"Error: {e}")
-    sys.exit(1)
+from pymongo import MongoClient
 
-# MongoDB aggregation pipeline
-pipeline = [
-    { '$group': { '_id': '$ip', 'count': { '$sum': 1 } } },
-    { '$sort': { 'count': -1 } },
-]
+client = MongoClient('mongodb://localhost:27017/')
+logs_collection = client.logs.nginx
 
-# Execute the aggregation query
-try:
-    result = list(collection.aggregate(pipeline))
-    total_logs = len(result)
-    top_ips = result[:10]  # Extract top 10 IP addresses
-except Exception as e:
-    print(f"Error during aggregation: {e}")
-    sys.exit(1)
+def count_logs():
+    """Count logs"""
+    total_logs = logs_collection.count_documents({})
+    print(f"{total_logs} logs")
 
-# Output formatting
-print(f"Total number of logs: {total_logs}")
-print("Top 10 IP addresses with the highest occurrence:")
-for idx, ip_data in enumerate(top_ips, start=1):
-    print(f"#{idx}: IP Address: {ip_data['_id']}, Count: {ip_data['count']}")
+def count_methods():
+    """Count methods"""
+    methods = logs_collection.aggregate([
+        {"$group": {"_id": "$method", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ])
+    print("Methods:")
+    for method in methods:
+        print(f"    method {method['_id']}: {method['count']}")
 
-# Additional aggregation for methods and status checks can be added here
+def count_status():
+    """Count status"""
+    status = logs_collection.aggregate([
+        {"$group": {"_id": "$status_code", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}}
+    ])
+    status_check = sum([s['count'] for s in status if s['_id'] == 200])
+    print(f"{status_check} status check")
+
+def top_ips():
+    """Top IPs"""
+    top_ips = logs_collection.aggregate([
+        {"$group": {"_id": "$ip", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ])
+    print("IPs:")
+    for ip in top_ips:
+        print(f"    {ip['_id']}: {ip['count']}")
+
+if __name__ == "__main__":
+    count_logs()
+    count_methods()
+    count_status()
+    top_ips()
