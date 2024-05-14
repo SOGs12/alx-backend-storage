@@ -1,7 +1,16 @@
-#!/usr/bin/env python
-""" creat a collection of all students sorted by average score"""
+#!/usr/bin/env python3
+"""Create a collection of all students sorted by average score."""
 
 def top_students(mongo_collection):
+    """
+    Create a collection of all students sorted by their average score.
+
+    Args:
+        mongo_collection (pymongo.collection.Collection): The MongoDB collection.
+
+    Returns:
+        list: A list of top students sorted by average score.
+    """
     pipeline = [
         {
             '$project': {
@@ -18,6 +27,14 @@ def top_students(mongo_collection):
         }
     ]
 
-    top_students = list(mongo_collection.aggregate(pipeline))
+    if 'topics' in mongo_collection.find_one():
+        top_students = list(mongo_collection.aggregate(pipeline))
+        return top_students
+    else:
+        print("The 'topics' field is missing in the collection.")
+        return []
 
-    return top_students
+# Check if the script is executed directly
+if __name__ == "__main__":
+    # Add your test code or execution logic here
+    pass
