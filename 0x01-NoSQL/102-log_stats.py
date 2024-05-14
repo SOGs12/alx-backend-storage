@@ -1,25 +1,33 @@
-#!/usr/bin/env python3
-from pymongo import MongoClient
+# Add necessary imports here
 
-if __name__ == "__main__":
-    client = MongoClient('mongodb://127.0.0.1:27017')
-    logs_collection = client.logs.nginx
+# MongoDB connection setup
+try:
+    client = MongoClient('mongodb://localhost:27017/')
+    db = client['your_database_name']
+    collection = db['your_collection_name']
+except Exception as e:
+    print(f"Error: {e}")
+    sys.exit(1)
 
-    total_logs = logs_collection.count_documents({})
+# MongoDB aggregation pipeline
+pipeline = [
+    { '$group': { '_id': '$ip', 'count': { '$sum': 1 } } },
+    { '$sort': { 'count': -1 } },
+]
 
-    # Count the occurrences of each IP and get the top 10
-    top_ips = list(logs_collection.aggregate([
-        {"$group": {"_id": "$ip", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}},
-        {"$limit": 10}
-    ]))
+# Execute the aggregation query
+try:
+    result = list(collection.aggregate(pipeline))
+    total_logs = len(result)
+    top_ips = result[:10]  # Extract top 10 IP addresses
+except Exception as e:
+    print(f"Error during aggregation: {e}")
+    sys.exit(1)
 
-    print(f"{total_logs} logs")
-    
-    # Display the top IPs and their counts
-    print("IPs:")
-    for ip_data in top_ips:
-        print(f"    {ip_data['_id']}: {ip_data['count']}")
+# Output formatting
+print(f"Total number of logs: {total_logs}")
+print("Top 10 IP addresses with the highest occurrence:")
+for idx, ip_data in enumerate(top_ips, start=1):
+    print(f"#{idx}: IP Address: {ip_data['_id']}, Count: {ip_data['count']}")
 
-    # Include the existing statistics for methods and status checks
-    # (You can add this part by adapting from the existing script)
+# Additional aggregation for methods and status checks can be added here
