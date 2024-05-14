@@ -11,6 +11,10 @@ def top_students(mongo_collection):
     Returns:
         list: A list of top students sorted by average score.
     """
+    if mongo_collection.count_documents({}) == 0:
+        print("The collection is empty.")
+        return []
+
     pipeline = [
         {
             '$project': {
@@ -27,12 +31,8 @@ def top_students(mongo_collection):
         }
     ]
 
-    if 'topics' in mongo_collection.find_one():
-        top_students = list(mongo_collection.aggregate(pipeline))
-        return top_students
-    else:
-        print("The 'topics' field is missing in the collection.")
-        return []
+    top_students = list(mongo_collection.aggregate(pipeline))
+    return top_students
 
 # Check if the script is executed directly
 if __name__ == "__main__":
